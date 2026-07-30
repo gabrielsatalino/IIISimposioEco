@@ -26,10 +26,40 @@ invasive_pa = factor(invasive_pa, levels = c(0, 1), labels = c("Nativa", "Não-n
 
 # Primeira pergunta: Estabilidade total em comunidades nativas vs não-nativas
 
+#Boxplot
+
 dados |>
   ggplot(aes(x = invasive_pa, y = log_CVc, fill = invasive_pa)) +
   geom_boxplot() +
   labs(title = "Estabilidade total em comunidades nativas vs não-nativas")
+
+#Violin Chart
+
+dados %>%
+  ggplot(aes(x = invasive_pa, y = log_CVc, fill = invasive_pa, shape = invasive_pa)) +
+  ggdist::stat_halfeye(adjust = .5, width = .3, show.legend = FALSE,
+                       .width = 0, justification = -.3, alpha = .9,
+                       point_colour = NA) + 
+  geom_boxplot(width = .1, outlier.shape = NA,
+               alpha = .5, show.legend = FALSE) +
+  gghalves::geom_half_point(side = "l", range_scale = .4,
+                            show.legend = FALSE, alpha = .5) +
+  labs(x = "", y = "log(CVc)", 
+       title = "Estabilidade total em comunidades nativas vs não-nativas") +
+  scale_fill_manual('', values = rev(wesanderson::wes_palette(n=2, name="Darjeeling1")), 
+                    labels = c("Nativa", "Não-nativa")) +
+  scale_shape_manual('', values = c(21, 23),
+                     labels = c("Nativa", "Não-nativa")) +
+  scale_color_manual('', values = rev(wesanderson::wes_palette(n=2, name="Darjeeling1")), 
+                     labels = c("Nativa", "Não-nativa")) +
+  theme_classic() +
+  theme(axis.text.y = element_text(color = "black", size = 20),
+        axis.text.x = element_text(color = "black", size = 20),
+        axis.title.y = element_text(size = 24, face = "bold"),
+        plot.title = element_text(size = 20, face = "bold"),
+        panel.border = element_rect(linewidth = 2, colour = "black",
+                                    fill = NA))
+
 
 # GABRIEL: Deixar esse grafico mais bonito, com cores diferentes (padrão de cores, mais limpo e com tema minimalista)
 
