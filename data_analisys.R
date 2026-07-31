@@ -17,35 +17,39 @@ library(treemap)
 library(treemapify)
 
 
-
 dados = read_csv(here("data_for_collaborators.csv"))
 print(head(dados))
 
 dados = dados |>
   select(c(HYBAS_ID, log_CVc, log_Delta, log_CVe, log_Psi, log_omega,
-         s_nat_rich_covar, s_inv_rich, s_inv_rel_abund, yrs_with_intro)) |>
-mutate(invasive_pa = ifelse(s_inv_rich == 0, 0, 1),
-invasive_pa = factor(invasive_pa, levels = c(0, 1), labels = c("Nativa", "Não-nativa")))
-# Classificando os sítios como com presença ou não de espécies não-nativa
+         s_nat_rich_covar, s_inv_rich, s_inv_rel_abund, yrs_with_intro))|>
+  mutate(
+    invasive_pa = if_else(s_inv_rich == 0, "Nativa", "Não-nativa"),
+    invasive_pa = factor(
+      invasive_pa,
+      levels = c("Nativa", "Não-nativa")
+    ),
 
+    CVc   = exp(log_CVc),
+    Delta = exp(log_Delta),
+    CVe   = exp(log_CVe),
+    Psi   = exp(log_Psi),
+    omega = exp(log_omega)
+  )
 
 # Primeira pergunta: Estabilidade total em comunidades nativas vs não-nativas
 
 #Boxplot simples
 dados |>
-  ggplot(aes(x = invasive_pa, y = log_CVc, fill = invasive_pa)) +
+  ggplot(aes(x = invasive_pa, y = CVc, fill = invasive_pa)) +
   geom_boxplot() +
   labs(title = "Estabilidade total em comunidades nativas vs não-nativas")
 
 
-#Violin Chart
+#Violin Chart - CVc
 dados %>%
+  ggplot(aes(x = invasive_pa, y = CVc, fill = invasive_pa, shape = invasive_pa)) +
 
-  ggplot(aes(x = invasive_pa, y = log_CVc, fill = invasive_pa, shape = invasive_pa)) +
- 
-
- geom_hline(yintercept = 0, linetype = "dashed", color = "#050404", 
- linewidth = 0.8) +
 
   ggdist::stat_halfeye(
     adjust = .5, width = .3, show.legend = FALSE,
@@ -67,7 +71,7 @@ dados %>%
 
   labs(
     x = "",
-    y = "log(CVc)"
+    y = "CVc"
   ) +
 
   scale_fill_manual(
@@ -96,6 +100,62 @@ dados %>%
     plot.title = element_text(size = 20, face = "bold"),
     panel.border = element_rect(linewidth = 2, colour = "black", fill = NA)
   )
+
+#Violin Chart - CVe
+dados %>%
+  ggplot(aes(x = invasive_pa, y = CVe, fill = invasive_pa, shape = invasive_pa)) +
+
+
+  ggdist::stat_halfeye(
+    adjust = .5, width = .3, show.legend = FALSE,
+    .width = 0, justification = -.3, alpha = .6,
+    point_colour = NA
+  ) + 
+
+  ggbeeswarm::geom_quasirandom(  # Troquei o gghalves por ggbeeswarm pra resolver seu problema ;)
+    width = .12,
+    alpha = .5,
+    size = 1.8,
+    show.legend = FALSE
+  ) +
+
+  geom_boxplot(
+    width = .1, outlier.shape = NA,
+    alpha = .75, show.legend = FALSE
+  ) +
+
+  labs(
+    x = "",
+    y = "CVe"
+  ) +
+
+  scale_fill_manual(
+    '',
+    values = rev(wesanderson::wes_palette(n = 2, name = "GrandBudapest1")),
+    labels = c("Nativa", "Não-nativa")
+  ) +
+
+  scale_shape_manual(
+    '',
+    values = c(21, 23),
+    labels = c("Nativa", "Não-nativa")
+  ) +
+
+  scale_color_manual(
+    '',
+    values = rev(wesanderson::wes_palette(n = 2, name = "GrandBudapest1")),
+    labels = c("Nativa", "Não-nativa")
+  ) +
+
+  theme_classic() +
+  theme(
+    axis.text.y = element_text(color = "black", size = 26),
+    axis.text.x = element_text(color = "black", size = 30),
+    axis.title.y = element_text(size = 24, face = "bold"),
+    plot.title = element_text(size = 20, face = "bold"),
+    panel.border = element_rect(linewidth = 2, colour = "black", fill = NA)
+  )
+
 
 # Modelo: Estabilidade total em comunidades nativas vs não-nativas
 
