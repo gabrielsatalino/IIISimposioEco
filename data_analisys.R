@@ -38,7 +38,6 @@ dados = dados |>
   )
 
 # Primeira pergunta: Estabilidade total em comunidades nativas vs não-nativas
-
 #Boxplot simples
 dados |>
   ggplot(aes(x = invasive_pa, y = CVc, fill = invasive_pa)) +
@@ -100,6 +99,7 @@ dados %>%
     plot.title = element_text(size = 20, face = "bold"),
     panel.border = element_rect(linewidth = 2, colour = "black", fill = NA)
   )
+
 
 #Violin Chart - CVe
 dados %>%
@@ -344,3 +344,76 @@ p_vals <- c(
 )
 
 p.adjust(p_vals, method = "bonferroni") # pensar em outros métodos de ajuste
+
+# ============================================================
+# PRÓXIMAS ETAPAS:
+
+# Objetivo:
+# Avaliar quais variaveis estão associadas as modificações da estabilidade total 
+# e de seus componentes em comunidades nativas e não-nativas.
+
+# Foque em decidir:
+# (i) qual hipótese cada modelo vai representar
+# (ii) quais variáveis devem (fazendo sentido de estar) em cada modelo;
+# (iii) como comparar e interpretar os modelos.
+
+# Antes de montar os seus novos modelos, cheque:
+# - Qual é a variável-resposta principal?
+# - Há medidas repetidas no tempo para um mesmo sítio?
+# - Há agrupamento de sítios dentro de bacias?
+
+# Essas decisões vão te ajudar a escolher a família de distribuição, a possível
+# inclusão de efeitos aleatórios e a independência das observações.
+
+
+# Os preditores não devem entrar todos juntos automaticamente.
+# Primeiro, organizar variáveis que respondem a mecanismos ecológicos
+# diferentes e propor modelos candidatos com base nesses mecanismos.
+#
+# Por exemplo:
+#
+# Intensidade da invasão:
+# - ano de primeira introdução;
+# - yrs_with_intro;
+# - s_inv_rich;
+# - s_inv_rel_abund.
+#
+# Contexto da comunidade:
+# - s_nat_rich_covar.
+#
+# Estrutura e conectividade:
+# - betweenness;
+# - closeness;
+# - degree;
+# - b_spat_wc_mean;
+# - modularidade.
+#
+
+# Minha sugestão é começar com modelos que respondem perguntas diferente por exemplo:
+# Modelo de histórico de invasão.
+# Modelo de composição da invasão.
+# Modelo de conectividade
+# Modelo que combine invasão + conectividade.
+
+
+# Acho que a princípio da pra evitar inicialmente um modelo global com todos os preditores. 
+# Você precisa entender a correlação entre essas variaveis - ou seja,
+# avaliar se as variáveis de um mesmo grupo expressam processos diferentes
+# ou se são medidas alternativas de um mesmo processo.
+
+# Antes de ajustar modelos:
+# Examinar correlações entre todas as variáveis contínuas.
+# Verificar especialmente possíveis correlações entre yrs_with_intro, ano de primeira introdução, s_inv_rich e s_inv_rel_abund.
+# Verificar também a relação entre as métricas de centralidade da rede.
+#
+# Se duas variáveis forem fortemente correlacionadas:
+#  Escolha apenas uma com base na hipótese ecológica;
+#  Monte modelos alternativos, cada um contendo uma das variáveis para avaliar;
+
+
+# Você precisa pensar que interações só devem ser inseridas somente quando há o efeito de um preditor como dependente de outro.
+# Além disso pensa se  o agrupamento dos sítios por bacia precisa ser incorporado
+# ao modelo, como efeito aleatório ou efeito fixo.
+#
+# Também considerar se a dependência espacial entre sítios pode violar
+# a independência dos resíduos.
