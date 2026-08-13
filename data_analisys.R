@@ -414,6 +414,210 @@ p.adjust(p_vals, method = "bonferroni") # pensar em outros métodos de ajuste
 # Você precisa pensar que interações só devem ser inseridas somente quando há o efeito de um preditor como dependente de outro.
 # Além disso pensa se  o agrupamento dos sítios por bacia precisa ser incorporado
 # ao modelo, como efeito aleatório ou efeito fixo.
+
+
 #
 # Também considerar se a dependência espacial entre sítios pode violar
 # a independência dos resíduos.
+
+#Modelos teste - CVc
+
+
+#Mod1 - Histórico de invasão
+
+mod1CVc <- lmer(
+  log_CVc ~ yrs_with_intro + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod1CVc)
+
+#Mod2.1 - Composição da invasão
+
+mod2.1CVc <- lmer(
+  log_CVc ~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod2.1CVc)
+
+#Mod3.1 - Invasão total 
+
+mod3.1CVc <- lmer(
+  log_CVc ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod3.1CVc)
+
+
+#Mod3.1 - Conectividade 
+
+mod3.1CVc <- lmer(
+  log_CVc ~ s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod3.1CVc)
+
+
+#Mod4 - Invasão + Conectividade 
+
+mod4CVc <- lmer(
+  log_CVc ~ s_inv_rich + s_spat_btw + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod4CVc)
+
+#Modelo Global
+
+mod_globalCVc <- lmer(
+  log_CVc ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod_globalCVc)
+
+#Obs Mods teste CVc: Problemas com as escalas das variáveis preditoras de conectividade. 
+#Efeito positivo da riqueza de não-nativas sobre a estabilidade total em todos os modelos (forte em alguns, sutil em outros).
+#Efeito individual positivo forte do tempo de invasão, mas colinearidade detectada com riqueza de não nativas.
+
+###########################################################################################################
+
+#Modelos teste - CVe
+
+
+#Mod1 - Histórico de invasão
+
+mod1CVe <- lmer(
+  log_CVe ~ yrs_with_intro + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod1CVe)
+
+#Mod2.1 - Composição da invasão 
+
+mod2.1CVe <- lmer(
+  log_CVe~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod2.1CVe)
+
+
+#Mod3.1 - Invasão total 
+
+mod3.1CVe <- lmer(
+  log_CVe ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod3.1CVe)
+
+
+#Mod3.1 - Conectividade 
+
+mod3.1CVe <- lmer(
+  log_CVe ~ s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod3.1CVe)
+
+
+#Mod4 - Invasão + Conectividade
+mod4CVe <- lmer(
+  log_CVe ~ s_inv_rich + s_spat_btw + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod4CVe)
+
+#Modelo Global
+
+mod_globalCVe <- lmer(
+  log_CVe ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod_globalCVe)
+
+#Obs Mods teste CVc: Problemas com as escalas das variáveis preditoras de conectividade. 
+#Riqueza de não-nativas e anos de invasão tiveram efeitos positivos fortes em modelos diferentes. Riqueza teve efeito positivo forte em mais modelos.
+############################################################################################################################
+
+#Modelos teste - Delta
+
+
+#Mod1 - Histórico de invasão
+
+mod1Del <- lmer(
+  log_Delta ~ yrs_with_intro + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod1Del)
+
+#Mod2.1 - Composição da invasão 
+
+mod2.1Del <- lmer(
+  log_Delta ~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod2.1Del)
+
+
+#Mod3.1 - Invasão total 
+
+mod3.1Del <- lmer(
+  log_Delta ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
+  data = dados
+)
+
+summary(mod3.1Del)
+
+
+#Mod3.1 - Conectividade 
+
+mod3.1Del <- lmer(
+  log_Delta ~ s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod3.1Del)
+
+
+#Mod4 - Invasão + Conectividade
+mod4Del <- lmer(
+  log_Delta ~ s_inv_rich + s_spat_btw + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod4Del)
+
+#Modelo Global
+
+mod_globalDel <- lmer(
+  log_Delta ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  data = dados,
+  control = lmerControl(autoscale = TRUE)
+)
+
+summary(mod_globalDel)
+
+#Obs Mods teste Delta: Problemas com as escalas das variáveis preditoras de conectividade. 
+#Modelo invasão total: Efeito negativo forte da riqueza e efeito negativo forte do tempo de invasão.
+#Efeito positivo da riqueza de não-nativas em quase todos os modelos.
+
+
