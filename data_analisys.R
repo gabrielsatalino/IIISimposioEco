@@ -416,14 +416,19 @@ p.adjust(p_vals, method = "bonferroni") # pensar em outros métodos de ajuste
 # ao modelo, como efeito aleatório ou efeito fixo.
 
 
-#
 # Também considerar se a dependência espacial entre sítios pode violar
 # a independência dos resíduos.
 
-#Modelos teste - CVc
 
+###########################################################################################################
+# Modelos teste - CVc
 
-#Mod1 - Histórico de invasão
+# Anotações importantes: REML é frequentemente usado para estimar os componentes de variância.
+# Nesse caso, a variância entre bacias e a variância residual
+# Quando comparar modelos com efeitos fixos diferentes usando AIC você precisa usar os modelos candidatos com REML = FALSE
+# Depois, com o modelo final decidido, você volta a reajustar com REML = TRUE.
+
+# Modelo 1 - Histórico de invasão
 
 mod1CVc <- lmer(
   log_CVc ~ yrs_with_intro + (1 | HYBAS_ID),
@@ -432,57 +437,111 @@ mod1CVc <- lmer(
 
 summary(mod1CVc)
 
-#Mod2.1 - Composição da invasão
+# Esse modelo parace funcionar, mas a gente precisa prestar atenção a variação das bacias, talvez se colocar alguma variavel espacial melhore.
+# Vou tentar centralizar a variável pra ver se estabiliza um pouco melhor.
+
+dados$yrs_with_intro_c <- scale(
+  dados$yrs_with_intro,
+  center = TRUE,
+  scale = FALSE
+)
+
+mod_nulo <- lmer(
+  log_CVc ~ 1 + (1 | HYBAS_ID),
+  data = dados,
+  REML = FALSE
+) # Fazendo pra você entender a comparação de como funciona a inserção da variável temporal
+
+mod1CVc_c <- lmer(
+  log_CVc ~ yrs_with_intro_c + (1 | HYBAS_ID),
+  data = dados,
+  REML = FALSE
+)
+summary(mod1CVc_c)
+
+anova(mod_nulo, mod1CVc_c) # Função básica pra comparar modelos
+
+# Modelo 2.1 - Composição da invasão
+dados <- dados |>
+  dplyr::mutate(
+    s_inv_rich_z = as.numeric(scale(s_inv_rich)),
+    s_inv_rel_abund_z = as.numeric(scale(s_inv_rel_abund)),
+    HYBAS_ID = factor(HYBAS_ID)
+  )
 
 mod2.1CVc <- lmer(
-  log_CVc ~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich_c + s_inv_rel_abund_c  + (1 | HYBAS_ID),
   data = dados
 )
 
 summary(mod2.1CVc)
 
-#Mod3.1 - Invasão total 
+mod2.1CVc_int = lmer(
+  log_CVc ~ s_inv_rich_c * s_inv_rel_abund_c + (1 | HYBAS_ID),
+  data = dados
+)
+summary(mod2.1CVc_int)
+# Testar intenração de riqueza de não-nativas e abundância relativa
+# Não tem interação, daí segue com esse modelo que você fez!
+
+
+#Modelo 3.1 - Invasão total 
 
 mod3.1CVc <- lmer(
-  log_CVc ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
+  log_CVc ~ yrs_with_intro_c + s_inv_rich_c + s_inv_rel_abund_c + (1 | HYBAS_ID),
   data = dados
 )
 
 summary(mod3.1CVc)
 
-
-#Mod3.1 - Conectividade 
-
-mod3.1CVc <- lmer(
-  log_CVc ~ s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
-  data = dados,
-  control = lmerControl(autoscale = TRUE)
+mod3.1CVc_int = lmer(
+  log_CVc ~ s_inv_rich_c * s_inv_rel_abund_c * yrs_with_intro_c+ (1 | HYBAS_ID),
+  data = dados
 )
+summary(mod3.1CVc_int)
+# Testar intenração de riqueza de não-nativas e abundância relativa
+# Sem interação, daí segue com esse modelo que você fez!
 
-summary(mod3.1CVc)
+#Modelo 4.1 - Conectividade
+# Como as variaveis estao em diferentes escalas, precisamos de uma transformação
+# para que o modelo seja estimado corretamente.
 
+dados <- dados |>
+  dplyr::mutate(
+    s_spat_btw_z = as.numeric(scale(s_spat_btw_c)),
+    b_spat_wc_mean_z = as.numeric(scale(b_spat_wc_mean_c)),
+    HYBAS_ID = factor(HYBAS_ID)
+  )
 
-#Mod4 - Invasão + Conectividade 
+mod4.1CVc <- lmer(
+  log_CVc ~ s_spat_btw_z + b_spat_wc_mean_z + (1 | HYBAS_ID),
+  data = dados,
+)
+summary(mod4.1CVc)
+
+#Modelo 5 - Invasão + Conectividade 
 
 mod4CVc <- lmer(
-  log_CVc ~ s_inv_rich + s_spat_btw + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich_z * s_spat_btw_z + (1 | HYBAS_ID),
   data = dados,
-  control = lmerControl(autoscale = TRUE)
-)
+) # Foca mais nesse modelo de interação
 
 summary(mod4CVc)
 
-#Modelo Global
+# Modelo Global
+dados <- dados |>
+  dplyr::mutate(
+    HYBAS_ID = factor(HYBAS_ID),
+    yrs_with_intro_z = as.numeric(scale(yrs_with_intro)))
+
 
 mod_globalCVc <- lmer(
-  log_CVc ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  log_CVc ~ yrs_with_intro_z + s_inv_rich_z * s_spat_btw_z + (1 | HYBAS_ID),
   data = dados,
-  control = lmerControl(autoscale = TRUE)
 )
 
 summary(mod_globalCVc)
 
-#Obs Mods teste CVc: Problemas com as escalas das variáveis preditoras de conectividade. 
 #Efeito positivo da riqueza de não-nativas sobre a estabilidade total em todos os modelos (forte em alguns, sutil em outros).
 #Efeito individual positivo forte do tempo de invasão, mas colinearidade detectada com riqueza de não nativas.
 
@@ -490,11 +549,10 @@ summary(mod_globalCVc)
 
 #Modelos teste - CVe
 
-
 #Mod1 - Histórico de invasão
 
 mod1CVe <- lmer(
-  log_CVe ~ yrs_with_intro + (1 | HYBAS_ID),
+  log_CVe ~ yrs_with_intro_z + (1 | HYBAS_ID),
   data = dados
 )
 
@@ -503,9 +561,10 @@ summary(mod1CVe)
 #Mod2.1 - Composição da invasão 
 
 mod2.1CVe <- lmer(
-  log_CVe~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
+  log_CVe ~ s_inv_rich_z * s_inv_rel_abund_z  + (1 | HYBAS_ID),
   data = dados
-)
+) 
+# Pensa nesse modelo de interação, o p é marginal, mas de qualquer forma é um modelo interessante.
 
 summary(mod2.1CVe)
 
@@ -513,9 +572,10 @@ summary(mod2.1CVe)
 #Mod3.1 - Invasão total 
 
 mod3.1CVe <- lmer(
-  log_CVe ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
-  data = dados
-)
+  log_CVe ~ yrs_with_intro_z + s_inv_rich_z + (1 | HYBAS_ID),
+  data = dados_CVe_comp,
+  REML = FALSE
+) # Acho que esse modelo é o mais interessante pra Cve até agora.
 
 summary(mod3.1CVe)
 
@@ -523,7 +583,7 @@ summary(mod3.1CVe)
 #Mod3.1 - Conectividade 
 
 mod3.1CVe <- lmer(
-  log_CVe ~ s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
+  log_CVe ~ s_spat_btw_z + b_spat_wc_mean_z + (1 | HYBAS_ID),
   data = dados,
   control = lmerControl(autoscale = TRUE)
 )
@@ -533,9 +593,8 @@ summary(mod3.1CVe)
 
 #Mod4 - Invasão + Conectividade
 mod4CVe <- lmer(
-  log_CVe ~ s_inv_rich + s_spat_btw + (1 | HYBAS_ID),
-  data = dados,
-  control = lmerControl(autoscale = TRUE)
+  log_CVe ~ s_inv_rich_z + s_spat_btw_z + (1 | HYBAS_ID),
+  data = dados
 )
 
 summary(mod4CVe)
@@ -543,14 +602,30 @@ summary(mod4CVe)
 #Modelo Global
 
 mod_globalCVe <- lmer(
-  log_CVe ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + s_spat_btw + b_spat_wc_mean + (1 | HYBAS_ID),
-  data = dados,
-  control = lmerControl(autoscale = TRUE)
-)
+  log_CVe ~ yrs_with_intro_z + s_inv_rich_z + s_spat_btw_z + (1 | HYBAS_ID),
+  data = dados_CVe_comp,
+  REML = FALSE
+) 
+
 
 summary(mod_globalCVe)
 
-#Obs Mods teste CVc: Problemas com as escalas das variáveis preditoras de conectividade. 
+anova(mod3.1CVe, mod_globalCVe) 
+# Acho que discutimos essa comparação com o Tadeu na sexta
+
+# Uma variavel tem NA, dai precisamos filtrar os dados completmos antes de fazer o modelo comparável
+
+dados_CVe_comp <- dados |>
+  dplyr::filter(
+    complete.cases(
+      log_CVe,
+      yrs_with_intro_z,
+      s_inv_rich_z,
+      s_spat_btw_z,
+      HYBAS_ID
+    )
+  )
+
 #Riqueza de não-nativas e anos de invasão tiveram efeitos positivos fortes em modelos diferentes. Riqueza teve efeito positivo forte em mais modelos.
 ############################################################################################################################
 
@@ -560,7 +635,7 @@ summary(mod_globalCVe)
 #Mod1 - Histórico de invasão
 
 mod1Del <- lmer(
-  log_Delta ~ yrs_with_intro + (1 | HYBAS_ID),
+  log_Delta ~ yrs_with_intro_z + (1 | HYBAS_ID),
   data = dados
 )
 
