@@ -13,29 +13,21 @@ library(tidyverse)
 library(lmerTest)
 library(AICcmodavg)
 library(here)
-library(treemap)
-library(treemapify)
 
 
 dados = read_csv(here("data_for_collaborators.csv"))
 print(head(dados))
 
 dados = dados |>
-  select(c(HYBAS_ID, log_CVc, log_Delta, log_CVe, log_Psi, log_omega,
-         s_nat_rich_covar, s_inv_rich, s_inv_rel_abund, yrs_with_intro))|>
   mutate(
-    invasive_pa = if_else(s_inv_rich == 0, "Nativa", "Não-nativa"),
-    invasive_pa = factor(
-      invasive_pa,
-      levels = c("Nativa", "Não-nativa")
-    ),
-
     CVc   = exp(log_CVc),
     Delta = exp(log_Delta),
     CVe   = exp(log_CVe),
     Psi   = exp(log_Psi),
     omega = exp(log_omega)
   )
+
+glimpse(dados)
 
 # Primeira pergunta: Estabilidade total em comunidades nativas vs não-nativas
 #Boxplot simples
@@ -161,154 +153,6 @@ dados %>%
 
 mod_pergunta <- lmer(log_CVc ~ invasive_pa + (1 | HYBAS_ID), data = dados)
 summary(mod_pergunta)
-
-# GABRIEL: testar os diagnosticos do modelo e escrever uma explicação sobre o resultado do modelo, se a relação entre estabilidade
-# e diversidade é diferente para comunidades nativas e não-nativas.
-
-componentes_long = dados |>
-  filter(!is.na(invasive_pa)) |>
-  pivot_longer(
-    cols = c(log_Delta, log_CVe, log_Psi, log_omega),
-    names_to = "componente",
-    values_to = "valor"
-  ) |>
-  mutate(
-    componente = recode(
-      componente,
-      log_Delta = "Delta",
-      log_CVe = "CVe",
-      log_Psi = "Psi",
-      log_omega = "Omega"
-    )
-  )
-
-
-nativa <- componentes_long |>
-  filter(invasive_pa == "Nativa") |>
-  group_by(componente) |>
-  summarise(valor = mean(valor, na.rm = TRUE), .groups = "drop") |>
-  mutate(magnitude = abs(valor))
-
-nao_native <- componentes_long |>
-  filter(invasive_pa == "Não-nativa") |>
-  group_by(componente) |>
-  summarise(valor = mean(valor, na.rm = TRUE), .groups = "drop") |>
-  mutate(magnitude = abs(valor))
-
-# Nativa
-treemap(
-  nativa,
-  index = "componente",
-  vSize = "magnitude",
-  vColor = "valor",
-  type = "value",
-  palette = "RdBu",
-  title = "",
-  title.legend = "",
-  fontsize.labels = 18,
-  fontcolor.labels = "white",
-  fontface.labels = c("bold"),
-  border.col = "white",
-  border.lwds = c(2, 2),
-  align.labels = list(
-    c("center", "center"),
-    c("center", "center")
-  ),
-  bg.labels = "transparent",
-  position.legend = "none"
-)
-
-# treemapify()
-p_nativa =
-ggplot(
-  nativa,
-  aes(
-    area  = magnitude,
-    fill  = valor,
-    label = componente
-  )
-) +
-  geom_treemap(color = "white", size = 10) +
-  geom_treemap_text(
-    colour = "white",
-    size   = 1.2,
-    fontface = "bold",
-    place  = "centre",
-    grow   = TRUE
-  ) +
-  scale_fill_distiller(palette = "RdBu") +
-  labs(
-    title = "Comunidades nativas",
-    fill  = "Value"
-  ) +
-  theme_void() +
-  theme(
-    plot.title = element_text(
-      hjust = 0.5,
-      face  = "bold",
-      size  = 30
-    ),
-    legend.position = "none"
-  )
-
-
-# Não-nativa
-treemap(nao_native,
-  index = "componente",
-  vSize = "magnitude",
-  vColor = "valor",
-  type = "value",
-  palette = "RdBu",
-  title = "",
-  title.legend = "",
-  fontsize.labels = 18,
-  fontcolor.labels = "white",
-  fontface.labels = c("bold"),
-  border.col = "white",
-  border.lwds = c(2, 2),
-  align.labels = list(
-    c("center", "center"),
-    c("center", "center")
-  ),
-  bg.labels = "transparent",
-  position.legend = "none"
-)
-
-# treemapify()
-p_naonativa =
-ggplot(
-  nao_native,
-  aes(
-    area  = magnitude,
-    fill  = valor,
-    label = componente
-  )
-) +
-  geom_treemap(color = "white", size = 2) +
-  geom_treemap_text(
-    colour = "white",
-    size   = 1.2,
-    fontface = "bold",
-    place  = "centre",
-    grow   = TRUE
-  ) +
-  scale_fill_distiller(palette = "RdBu") +
-  labs(
-    title = "Comunidades não nativas",
-    fill  = "Value"
-  ) +
-  theme_void() +
-  theme(
-    plot.title = element_text(
-      hjust = 0.5,
-      face  = "bold",
-      size  = 30
-    ),
-    legend.position = "none"
-  )
-
-
-p_nativa + p_naonativa
 
 # Testar os modelos de cada componente - e avaliar os resultadfos
 
@@ -695,106 +539,88 @@ summary(mod_globalDel)
 #Modelo invasão total: Efeito negativo forte da riqueza e efeito negativo forte do tempo de invasão.
 #Efeito positivo da riqueza de não-nativas em quase todos os modelos.
 
-
+########################################################################################################
 #Modelos Finais
 
 # Centralização das variáveis
+glimpse(dados)
+
 dados = dados |>
-  mutate(invasive_pa = ifelse(s_inv_rich == 0, 0, 1),
-         invasive_pa = factor(invasive_pa, levels = c(0, 1), labels = c("Nativa", "Não-nativa")))
-
-dados <- dados |>
   dplyr::mutate(
-    s_spat_btw_z = as.numeric(scale(s_spat_btw_c)),
-    b_spat_wc_mean_z = as.numeric(scale(b_spat_wc_mean_c)),
-    HYBAS_ID = factor(HYBAS_ID)
-  )
-
-dados <- dados |>
-  dplyr::mutate(
+    s_spat_btw_z = as.numeric(scale(s_spat_btw)),
+    b_spat_wc_mean_z = as.numeric(scale(b_spat_wc_mean)),
     s_inv_rich_z = as.numeric(scale(s_inv_rich)),
     s_inv_rel_abund_z = as.numeric(scale(s_inv_rel_abund)),
+   yrs_with_intro_z = as.numeric(scale(yrs_with_intro)),
     HYBAS_ID = factor(HYBAS_ID)
   )
 
-dados <- dados |>
-  dplyr::mutate(
-    HYBAS_ID = factor(HYBAS_ID),
-    yrs_with_intro_z = as.numeric(scale(yrs_with_intro)))
-
-
-#Tirar o log das variáveis resposta
-dados = dados |>
-  mutate(CVc = exp(log_CVc))
-
-dados = dados |>
-  mutate(CVe = exp(log_CVe))
-
-dados = dados |>
-  mutate(Delta = exp(log_Delta))
-
-dados = dados |>
-  mutate(Psi = exp(log_Psi))
-
-dados = dados |>
-  mutate(omega = exp(log_omega))
-
-#Modelos presença/ausência
-
-mod_presencaCVc <- lmer(CVc ~ invasive_pa + (1 | HYBAS_ID), data = dados)
-
-mod_presencaCVe <- lmer(CVe ~ invasive_pa + (1 | HYBAS_ID), data = dados)
+glimpse(dados)
 
 #Modelos preditoras numéricas: 4 modelos para cada var, resposta: nulo, invasão, conectividade e global
-
-
 #Variabilidade temporal total da comunidade (CVc)#############
 
 #Nulo
-
 mod_nullCVc <- lmer(
   CVc ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
-#Invasão
+summary(mod_nullCVc)
 
+#Invasão
 mod_invCVc <- lmer(
   CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
-#Conectividade
+summary(mod_invCVc)
 
+#Conectividade
 mod_conectCVc <- lmer(
-  CVc ~ b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  CVc ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
-#Global
+summary(mod_conectCVc)
 
+#Global
 mod_globalCVc <- lmer(
   CVc ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
-#AICC
+summary(mod_globalCVc)
 
+#AICC
 aictab(c(mod_nullCVc, mod_invCVc, mod_conectCVc, mod_globalCVc))
 
 #O melhor modelo foi o mod_invCVc
+library(performance)
+library(see)
 
 summary(mod_invCVc)
+check_model(mod_invCVc)
 
-performance::r2(mod_invCVc)
+r2(mod_invCVc)
+check_collinearity(mod_invCVc)
+check_singularity(mod_invCVc)
+icc(mod_invCVc)
+
+# Refazer o modelo sem REML=FALSE
+mod_invCVc <- lmer(
+  CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
+  data = dados,
+  REML = TRUE
+)
+summary(mod_invCVc)
 
 
 #Variabilidade temporal populacional (CVe)##############
-
 #Nulo
 mod_nullCVe <- lmer(
   CVe ~ 1 + (1 | HYBAS_ID),
@@ -802,52 +628,103 @@ mod_nullCVe <- lmer(
   REML = FALSE
 )
 
+summary(mod_nullCVe)
 
 #Invasão
-
 mod_invCVe <- lmer(
   CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
     data = dados,
     REML = FALSE
 )
 
+summary(mod_invCVe)
 
 #Conectividade
-
 mod_conectCVe <- lmer(
   CVe ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE)
 
-#Global
+summary(mod_conectCVe)
 
+#Global
 mod_globalCVe <- lmer(
   CVe ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE)
 
-#AICC
+summary(mod_globalCVe)
 
+#AICC
 aictab(c(mod_nullCVe, mod_invCVe, mod_conectCVe, mod_globalCVe))
 
-#O melhor modelo foi o mod_invCVe
+#O melhor modelo foi o mod_invCVe 
+# Gabriela: talvez dê pra pensar no modelo global nesse caso.
+
+summary(mod_invCVe)
+check_model(mod_invCVe)
+
+r2(mod_invCVe)
+check_collinearity(mod_invCVe)
+check_singularity(mod_invCVe)
+icc(mod_invCVe)
+
+mod_invCVe <- lmer(
+  CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+    data = dados,
+    REML = TRUE
+)
 
 summary(mod_invCVe)
 
-performance::r2(mod_invCVe)
-
-
 #Efeito dominância (Delta)##############
-
 #Nulo
-
 mod_nullDelta <- lmer(
   Delta ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
+summary(mod_nullDelta)
+
 #Invasão
+mod_invDelta <- lmer(
+  Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  data = dados,
+  REML = FALSE
+)
+
+summary(mod_invDelta)
+
+#Conectividade
+mod_conectDelta <- lmer(
+  Delta ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  data = dados,
+  REML = FALSE
+)
+
+summary(mod_conectDelta)
+
+#Global
+mod_globalDelta <- lmer(
+Delta ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+data = dados,
+REML = FALSE
+)
+
+summary(mod_globalDelta)
+
+#AICC
+aictab(c(mod_nullDelta, mod_invDelta, mod_conectDelta, mod_globalDelta))
+#O melhor modelo foi o mod_invDelta
+
+summary(mod_invDelta)
+check_model(mod_invDelta)
+
+r2(mod_invDelta)
+check_collinearity(mod_invDelta)
+check_singularity(mod_invDelta)
+icc(mod_invDelta)
 
 mod_invDelta <- lmer(
   Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
@@ -855,77 +732,70 @@ mod_invDelta <- lmer(
   REML = FALSE
 )
 
-#Conectividade
-
-mod_conectDelta <- lmer(
-  Delta ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
-  data = dados,
-  REML = FALSE
-)
-
-#Global
-
-mod_globalDelta <- lmer(
-Delta ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
-data = dados,
-REML = FALSE
-)
-
-#AICC
-
-aictab(c(mod_nullDelta, mod_invDelta, mod_conectDelta, mod_globalDelta))
-
-#O melhor modelo foi o mod_invDelta
-
-summary(mod_invDelta)
-
-performance::r2(mod_invDelta)
-
+summary(mod_invCVe)
 
 #Efeito assincronia (Psi)#################
 
 #Nulo
-
 mod_nullPsi <- lmer(
   Psi ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
-  
-#Invasão
 
+summary(mod_nullPsi)
+
+#Invasão
 mod_invPsi <- lmer(Psi ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
-                   data = dados,
-                   REML = FALSE
-                   )
+data = dados,
+REML = FALSE)
+
+summary(mod_invPsi)
 
 #Conectividade
-
 mod_conectPsi <- lmer(
   Psi ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
 
-#Global
+summary(mod_conectPsi)
 
-mod_globalPsi <- lmer(Psi ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
-                      data = dados,
-                      REML = FALSE
-                      )
+#Global
+mod_globalPsi <- lmer(Psi ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z
+ + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+ data = dados,
+REML = FALSE)
+
+summary(mod_globalPsi)
 
 #AICC
-
 aictab(c(mod_nullPsi, mod_invPsi, mod_conectPsi, mod_globalPsi))
 
 #O melhor modelo foi o mod_nullPsi, mas mod_invPsi teve valor de Delta_AICc = 1.65.
+# Gabriela: dá pra usar o de invasão
 
 summary(mod_nullPsi)
-
 performance::r2(mod_nullPsi)
 
-#Efeito diversidade (omega)##################
+# Gabriela
+summary(mod_invPsi)
+check_model(mod_invPsi)
 
+r2(mod_invPsi)
+check_collinearity(mod_invPsi)
+check_singularity(mod_invPsi)
+icc(mod_invPsi)
+
+mod_invPsi <- lmer(
+  `Psi` ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  data = dados,
+  REML = TRUE
+)
+
+summary(mod_invPsi)
+
+#Efeito diversidade (omega)##################
 #Nulo
 mod_nullomega <- lmer(
   omega ~ 1 + (1 | HYBAS_ID),
@@ -933,33 +803,48 @@ mod_nullomega <- lmer(
   REML = FALSE
 )
 
-#Invasão
+summary(mod_nullomega)
 
+#Invasão
 mod_invomega <- lmer(
   omega ~ s_inv_rich_z + yrs_with_intro_z + s_inv_rel_abund_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
   )
 
-#Conectividade
+summary(mod_invomega)
 
+#Conectividade
 mod_conectomega <- lmer(omega ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
-                           data = dados,
-                           REML = FALSE)
+data = dados,
+REML = FALSE)
+
+summary(mod_conectomega)
 
 #Global
-
 mod_globalomega <- lmer(omega ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
-                        data = dados,
-                        REML = FALSE)
+ data = dados,
+ REML = FALSE)
+
+summary(mod_globalomega)
 
 #AICC
-
 aictab(c(mod_nullomega, mod_invomega, mod_conectomega, mod_globalomega))
 
 #O melhor modelo foi o mod_invomega (Valor de AICcWt = 1)
 
 summary(mod_invomega)
+check_model(mod_invomega)
 
-performance::r2(mod_invomega)
+r2(mod_invomega)
+check_collinearity(mod_invomega)
+check_singularity(mod_invomega)
+icc(mod_invomega)
 
+mod_invomega <- lmer(
+  omega ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  data = dados,
+  REML = TRUE
+)
+
+summary(mod_invPsi)
