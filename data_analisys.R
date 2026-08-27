@@ -557,6 +557,10 @@ dados = dados |>
 
 glimpse(dados)
 
+#Paleta de cores (gráficos)
+
+paletawes <- wes_palette(n = 2, name = "GrandBudapest1")
+
 #Modelos preditoras numéricas: 4 modelos para cada var, resposta: nulo, invasão, conectividade e global
 #Variabilidade temporal total da comunidade (CVc)#############
 
@@ -619,6 +623,14 @@ mod_invCVc <- lmer(
 )
 summary(mod_invCVc)
 
+#Gráfico preditora mais explicativa (Sem escala / s_inv_rich)
+
+dados |>
+  ggplot(aes(x = s_inv_rich, y = CVc)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Variabilidade temporal da comunidade vs. tempo de introdução") +
+  theme_minimal()
 
 #Variabilidade temporal populacional (CVe)##############
 #Nulo
@@ -677,6 +689,17 @@ mod_invCVe <- lmer(
 
 summary(mod_invCVe)
 
+#Gráfico preditora mais explicativa (Sem escala / yrs_with_intro)
+
+dados |>
+  ggplot(aes(x = yrs_with_intro, y = CVe)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Variabilidade populacional vs. tempo de introdução") +
+  theme_minimal()
+
+
+
 #Efeito dominância (Delta)##############
 #Nulo
 mod_nullDelta <- lmer(
@@ -732,7 +755,23 @@ mod_invDelta <- lmer(
   REML = FALSE
 )
 
-summary(mod_invCVe)
+#Gráfico preditora mais explicativa (1) (Sem escala / yrs_with_intro)
+
+dados |>
+  ggplot(aes(x = yrs_with_intro, y = Delta)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Efeito dominância vs. tempo de introdução") +
+  theme_minimal()
+
+#Gráfico preditora mais explicativa (2) (Sem escala / s_inv_rich)
+
+dados |>
+  ggplot(aes(x = s_inv_rich, y = Delta)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Efeito dominância vs. riqueza de não-nativas") +
+  theme_minimal()
 
 #Efeito assincronia (Psi)#################
 
@@ -795,6 +834,18 @@ mod_invPsi <- lmer(
 
 summary(mod_invPsi)
 
+#Problema gráficos Psi: 
+#Apesar de mod_invPsi ser o melhor modelo, a variável com o menor valor de p deste modelo é yrs_with_intro, com p = 0.3820
+
+#Gráfico preditora mais explicativa  (Sem escala / yrs_with_intro)
+
+dados |>
+  ggplot(aes(x = yrs_with_intro, y = Psi)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Efeito assincronia vs. tempo de introdução") +
+  theme_minimal()
+
 #Efeito diversidade (omega)##################
 #Nulo
 mod_nullomega <- lmer(
@@ -846,5 +897,15 @@ mod_invomega <- lmer(
   data = dados,
   REML = TRUE
 )
+
+#Gráfico preditora mais explicativa  (Sem escala / yrs_with_intro)
+
+dados |>
+  ggplot(aes(x = yrs_with_intro, y = omega)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = paletawes[2]) +
+  labs(title = "Efeito diversidade vs. tempo de introdução") +
+  theme_minimal()
+
 
 summary(mod_invPsi)
