@@ -556,7 +556,7 @@ dados = dados |>
   )
 
 glimpse(dados)
-
+library(wesanderson)
 #Paleta de cores (gráficos)
 
 paletawes <- wes_palette(n = 2, name = "GrandBudapest1")
@@ -912,24 +912,26 @@ summary(mod_invPsi)
 
 #Gráficos finais
 
+install.packages("broom.mixed")
 # Função para extrair coeficientes com intervalos de confiança
-extract_coefs <- function(model, model_name) {
-  # Extrair coeficientes
-  coefs <- broom.mixed::tidy(model, conf.int = TRUE, effects = "fixed")
+extract_coefs =
+ function(model, model_name) {
+  coefs = broom.mixed::tidy(model, conf.int = TRUE, effects = "fixed")
   
   # Remover intercepto
-  coefs <- coefs[coefs$term != "(Intercept)", ]
+  coefs = coefs[coefs$term != "(Intercept)", ]
   
   # Adicionar nome do modelo
-  coefs$model <- model_name
+  coefs$model = model_name
   
   return(coefs)
 }
 
 # Extrair coeficientes dos melhores modelos
+
 coefs_CVc <- extract_coefs(mod_invCVc, "CVc")
-coefs_CVe <- extract_coefs(mod_invCVe_plot, "CVe")
-coefs_Delta <- extract_coefs(mod_invDelta_plot, "Delta")
+coefs_CVe <- extract_coefs(mod_invCVe, "CVe")
+coefs_Delta <- extract_coefs(mod_invDelta, "Delta")
 coefs_Psi <- extract_coefs(mod_invPsi, "Psi")
 coefs_omega <- extract_coefs(mod_invomega, "Omega")
 
@@ -937,27 +939,27 @@ coefs_omega <- extract_coefs(mod_invomega, "Omega")
 all_coefs <- bind_rows(coefs_CVc, coefs_CVe, coefs_Delta, coefs_Psi, coefs_omega)
 
 # Padronizar nomes das variáveis para melhor visualização
-all_coefs <- all_coefs %>%
+all_coefs = all_coefs %>%
   mutate(term_clean = case_when(
-    term == "s_inv_rich_z" ~ "Riqueza de invasoras",
-    term == "s_inv_rel_abund_z" ~ "Abundância relativa de invasoras",
-    term == "s_nat_rich_covar" ~ "Riqueza nativa",
+    term == "s_inv_rich_z" ~ "Riqueza de não-nativas",
+    term == "s_inv_rel_abund_z" ~ "Abundância relativa de não-nativas",
+    term == "s_nat_rich_covar" ~ "Riqueza de nativas",
     term == "yrs_with_intro_z" ~ "Anos desde introdução",
     term == "b_spat_wc_mean_z" ~ "Conectividade dentro da bacia",
     term == "s_spat_btw_z" ~ "Conectividade entre bacias",
     TRUE ~ term
   ))
 
-all_coefs <- all_coefs %>%
+all_coefs = all_coefs %>%
   mutate(
     # Ordenar variáveis resposta
     model = factor(model, levels = c("CVc", "CVe", "Delta", "Psi", "Omega")),
     
     # Ordenar variáveis preditoras
     term_clean = factor(term_clean, levels = c(
-      "Riqueza de invasoras",
+     "Riqueza de não-nativas",
       "Abundância relativa de invasoras",
-      "Riqueza nativa",
+      "Riqueza de nativas"
       "Anos desde introdução",
       "Conectividade dentro da bacia",
       "Conectividade entre bacias"
@@ -1019,9 +1021,9 @@ ggplot(all_coefs,
   
   # Cores das variáveis preditoras
   scale_color_manual(values = c(
-    "Riqueza de invasoras" = "#E41A1C",
-    "Abundância relativa de invasoras" = "#377EB8",
-    "Riqueza nativa" = "#4DAF4A",
+    "Riqueza de não-nativas" = "#E41A1C",
+    "Abundância relativa de não-nativas" = "#377EB8",
+    "Riqueza de nativas" = "#4DAF4A",
     "Anos desde introdução" = "#984EA3",
     "Conectividade dentro da bacia" = "#FF7F00",
     "Conectividade entre bacias" = "#A65628"
@@ -1056,3 +1058,78 @@ ggplot(all_coefs,
                      labels = seq(-0.15, 0.15, 0.05))
 
 
+
+
+# Gráfico Gabi ;)
+library(ggsci)
+
+lim_global =
+max(abs(c(all_coefs$estimate,
+all_coefs$conf.low,
+all_coefs$conf.high)),
+na.rm = TRUE) * 1.1
+
+
+ordem = c("Abundância relativa de não-nativas", "Anos desde introdução", "Conectividade dentro da bacia",
+ "Conectividade entre bacias", "Riqueza de nativas", "Riqueza de não-nativas")
+ 
+
+all_coefs = all_coefs |>
+  mutate(term_clean = factor(term_clean, levels = rev(
+    ordem[ordem %in% unique(term_clean)]
+  )))
+
+
+
+p = all_coefs |>
+ggplot(aes(x = estimate, y = term_clean,
+color = term_clean)) +
+
+
+geom_vline(xintercept = 0,
+ linetype = "dashed",
+color = "#060606",
+linewidth = 0.9) +
+
+
+geom_errorbar(aes(xmin = conf.low,
+ xmax = conf.high), width = 0,
+linewidth = 1.8, show.legend = FALSE) +
+
+
+geom_point(size = 5, show.legend = FALSE) +
+
+
+facet_wrap(~model,
+ncol = 1, 
+scales = "fixed",
+strip.position = "top") +
+
+
+coord_cartesian(xlim = c(-lim_global, lim_global)) +
+
+
+scale_color_npg() +
+
+
+labs(x = NULL,
+y = NULL) +
+
+theme_minimal(base_size = 20) +
+  theme(
+    strip.background = element_rect(fill = "black", color = NA),
+    strip.text = element_text(face = "bold", size = 20, color = "white"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.spacing = unit(1.1, "lines"),
+    axis.text.y = element_text(size = 19),
+    axis.text.x = element_text(size = 17),
+    plot.margin = margin(14, 20, 14, 14)
+  )
+
+ggsave("teste.png",
+plot = p,
+       width = 34, height = 32, units = "cm",
+       dpi = 300, bg = "white")
+
+getwd()
