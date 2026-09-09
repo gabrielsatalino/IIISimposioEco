@@ -909,3 +909,150 @@ dados |>
 
 
 summary(mod_invPsi)
+
+#Gráficos finais
+
+# Função para extrair coeficientes com intervalos de confiança
+extract_coefs <- function(model, model_name) {
+  # Extrair coeficientes
+  coefs <- broom.mixed::tidy(model, conf.int = TRUE, effects = "fixed")
+  
+  # Remover intercepto
+  coefs <- coefs[coefs$term != "(Intercept)", ]
+  
+  # Adicionar nome do modelo
+  coefs$model <- model_name
+  
+  return(coefs)
+}
+
+# Extrair coeficientes dos melhores modelos
+coefs_CVc <- extract_coefs(mod_invCVc, "CVc")
+coefs_CVe <- extract_coefs(mod_invCVe_plot, "CVe")
+coefs_Delta <- extract_coefs(mod_invDelta_plot, "Delta")
+coefs_Psi <- extract_coefs(mod_invPsi, "Psi")
+coefs_omega <- extract_coefs(mod_invomega, "Omega")
+
+# Combinar todos os coeficientes
+all_coefs <- bind_rows(coefs_CVc, coefs_CVe, coefs_Delta, coefs_Psi, coefs_omega)
+
+# Padronizar nomes das variáveis para melhor visualização
+all_coefs <- all_coefs %>%
+  mutate(term_clean = case_when(
+    term == "s_inv_rich_z" ~ "Riqueza de invasoras",
+    term == "s_inv_rel_abund_z" ~ "Abundância relativa de invasoras",
+    term == "s_nat_rich_covar" ~ "Riqueza nativa",
+    term == "yrs_with_intro_z" ~ "Anos desde introdução",
+    term == "b_spat_wc_mean_z" ~ "Conectividade dentro da bacia",
+    term == "s_spat_btw_z" ~ "Conectividade entre bacias",
+    TRUE ~ term
+  ))
+
+all_coefs <- all_coefs %>%
+  mutate(
+    # Ordenar variáveis resposta
+    model = factor(model, levels = c("CVc", "CVe", "Delta", "Psi", "Omega")),
+    
+    # Ordenar variáveis preditoras
+    term_clean = factor(term_clean, levels = c(
+      "Riqueza de invasoras",
+      "Abundância relativa de invasoras",
+      "Riqueza nativa",
+      "Anos desde introdução",
+      "Conectividade dentro da bacia",
+      "Conectividade entre bacias"
+    )),
+    
+
+    # Adicionar coluna de significância (se ainda não tiver)
+    significance = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01 ~ "**",
+      p.value < 0.05 ~ "*",
+      p.value < 0.1 ~ ".",
+      TRUE ~ "ns"
+    )
+  )
+
+
+# Forest plot final refinado
+
+ggplot(all_coefs, 
+                                     aes(x = estimate, 
+                                         y = model, 
+                                         color = term_clean)) +
+  
+  # Fundo levemente sombreado para melhor contraste
+  geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), 
+            fill = "gray99", alpha = 0.3) +
+  
+  # Linha vertical central em x = 0
+  geom_vline(xintercept = 0, 
+             linetype = "dashed", 
+             color = "black", 
+             alpha = 0.8,
+             linewidth = 0.7) +
+  
+  # Linhas horizontais de referência
+  geom_hline(yintercept = seq(0.5, 5.5, 1), 
+             linetype = "dotted", 
+             color = "gray85", 
+             alpha = 0.4) +
+  
+  # Pontos para as estimativas
+  geom_point(position = position_dodge(width = 0.6), 
+             size = 4,
+             shape = 21,  # Círculo com borda
+             stroke = 0.8) +  # Espessura da borda
+  
+  # Barras de erro horizontais
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
+                position = position_dodge(width = 0.6),
+                width = 0.3,
+                linewidth = 1.2,
+                orientation = "y") +
+  
+  facet_wrap(~model, 
+             ncol = 1,  # Uma coluna para melhor leitura
+             scales = "free_y",  # Eixo Y livre
+             strip.position = "right") +
+  
+  # Cores das variáveis preditoras
+  scale_color_manual(values = c(
+    "Riqueza de invasoras" = "#E41A1C",
+    "Abundância relativa de invasoras" = "#377EB8",
+    "Riqueza nativa" = "#4DAF4A",
+    "Anos desde introdução" = "#984EA3",
+    "Conectividade dentro da bacia" = "#FF7F00",
+    "Conectividade entre bacias" = "#A65628"
+  ),
+  name = "Variáveis preditoras") +
+  
+  # Labels
+  labs(x = "Estimativa padronizada (β)",
+       y = NULL,  # Remove o label do eixo Y
+       title = "Efeitos das variáveis preditoras na estabilidade") +
+       
+  # Tema
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.title = element_text(face = "bold", size = 10),
+    legend.text = element_text(size = 9),
+    legend.key.size = unit(1, "lines"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.text.x = element_text(size = 10),
+    axis.title.x = element_text(size = 12, face = "bold", margin = margin(t = 10)),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, color = "gray40", hjust = 0.5),
+    plot.margin = margin(10, 10, 10, 10)
+  ) +
+  
+  # Ajustar limites do eixo X
+  coord_cartesian(xlim = c(-0.15, 0.15), clip = "off") +
+  scale_x_continuous(breaks = seq(-0.15, 0.15, 0.05),
+                     labels = seq(-0.15, 0.15, 0.05))
+
+
