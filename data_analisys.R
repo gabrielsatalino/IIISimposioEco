@@ -566,7 +566,7 @@ paletawes <- wes_palette(n = 2, name = "GrandBudapest1")
 
 #Nulo
 mod_nullCVc <- lmer(
-  CVc ~ 1 + (1 | HYBAS_ID),
+  log_CVc ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -575,7 +575,7 @@ summary(mod_nullCVc)
 
 #Invasão
 mod_invCVc <- lmer(
-  CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -584,7 +584,7 @@ summary(mod_invCVc)
 
 #Conectividade
 mod_conectCVc <- lmer(
-  CVc ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVc ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -593,7 +593,7 @@ summary(mod_conectCVc)
 
 #Global
 mod_globalCVc <- lmer(
-  CVc ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVc ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -617,7 +617,7 @@ icc(mod_invCVc)
 
 # Refazer o modelo sem REML=FALSE
 mod_invCVc <- lmer(
-  CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich_z + s_inv_rel_abund_z + s_nat_rich_covar + yrs_with_intro_z + (1 | HYBAS_ID),
   data = dados,
   REML = TRUE
 )
@@ -635,7 +635,7 @@ dados |>
 #Variabilidade temporal populacional (CVe)##############
 #Nulo
 mod_nullCVe <- lmer(
-  CVe ~ 1 + (1 | HYBAS_ID),
+  log_CVe ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -644,7 +644,7 @@ summary(mod_nullCVe)
 
 #Invasão
 mod_invCVe <- lmer(
-  CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
     data = dados,
     REML = FALSE
 )
@@ -653,7 +653,7 @@ summary(mod_invCVe)
 
 #Conectividade
 mod_conectCVe <- lmer(
-  CVe ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVe ~ b_spat_wc_mean_z + s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE)
 
@@ -661,7 +661,7 @@ summary(mod_conectCVe)
 
 #Global
 mod_globalCVe <- lmer(
-  CVe ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVe ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE)
 
@@ -682,7 +682,7 @@ check_singularity(mod_invCVe)
 icc(mod_invCVe)
 
 mod_invCVe <- lmer(
-  CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_CVe ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
     data = dados,
     REML = TRUE
 )
@@ -703,7 +703,7 @@ dados |>
 #Efeito dominância (Delta)##############
 #Nulo
 mod_nullDelta <- lmer(
-  Delta ~ 1 + (1 | HYBAS_ID),
+  log_Delta ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -712,7 +712,7 @@ summary(mod_nullDelta)
 
 #Invasão
 mod_invDelta <- lmer(
-  Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -721,7 +721,7 @@ summary(mod_invDelta)
 
 #Conectividade
 mod_conectDelta <- lmer(
-  Delta ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_Delta ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -730,7 +730,7 @@ summary(mod_conectDelta)
 
 #Global
 mod_globalDelta <- lmer(
-Delta ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+log_Delta ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
 data = dados,
 REML = FALSE
 )
@@ -750,7 +750,7 @@ check_singularity(mod_invDelta)
 icc(mod_invDelta)
 
 mod_invDelta <- lmer(
-  Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_Delta ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -777,7 +777,7 @@ dados |>
 
 #Nulo
 mod_nullPsi <- lmer(
-  Psi ~ 1 + (1 | HYBAS_ID),
+  log_Psi ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -785,7 +785,8 @@ mod_nullPsi <- lmer(
 summary(mod_nullPsi)
 
 #Invasão
-mod_invPsi <- lmer(Psi ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+mod_invPsi <- lmer(
+  log_Psi ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
 data = dados,
 REML = FALSE)
 
@@ -793,7 +794,7 @@ summary(mod_invPsi)
 
 #Conectividade
 mod_conectPsi <- lmer(
-  Psi ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_Psi ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -801,7 +802,8 @@ mod_conectPsi <- lmer(
 summary(mod_conectPsi)
 
 #Global
-mod_globalPsi <- lmer(Psi ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z
+mod_globalPsi <- lmer(
+  log_Psi ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z
  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
  data = dados,
 REML = FALSE)
@@ -827,7 +829,7 @@ check_singularity(mod_invPsi)
 icc(mod_invPsi)
 
 mod_invPsi <- lmer(
-  `Psi` ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_Psi ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = TRUE
 )
@@ -849,7 +851,7 @@ dados |>
 #Efeito diversidade (omega)##################
 #Nulo
 mod_nullomega <- lmer(
-  omega ~ 1 + (1 | HYBAS_ID),
+  log_omega ~ 1 + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
 )
@@ -858,7 +860,7 @@ summary(mod_nullomega)
 
 #Invasão
 mod_invomega <- lmer(
-  omega ~ s_inv_rich_z + yrs_with_intro_z + s_inv_rel_abund_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_omega ~ s_inv_rich_z + yrs_with_intro_z + s_inv_rel_abund_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = FALSE
   )
@@ -866,14 +868,16 @@ mod_invomega <- lmer(
 summary(mod_invomega)
 
 #Conectividade
-mod_conectomega <- lmer(omega ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
+mod_conectomega <- lmer(
+  log_omega ~ s_spat_btw_z + b_spat_wc_mean_z + s_nat_rich_covar + (1 | HYBAS_ID),
 data = dados,
 REML = FALSE)
 
 summary(mod_conectomega)
 
 #Global
-mod_globalomega <- lmer(omega ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
+mod_globalomega <- lmer(
+  log_omega ~ yrs_with_intro_z + s_inv_rich_z + s_inv_rel_abund_z  + b_spat_wc_mean_z +  s_spat_btw_z + s_nat_rich_covar + (1 | HYBAS_ID),
  data = dados,
  REML = FALSE)
 
@@ -893,7 +897,7 @@ check_singularity(mod_invomega)
 icc(mod_invomega)
 
 mod_invomega <- lmer(
-  omega ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
+  log_omega ~ s_inv_rel_abund_z + yrs_with_intro_z + s_inv_rich_z + s_nat_rich_covar + (1 | HYBAS_ID),
   data = dados,
   REML = TRUE
 )
@@ -929,14 +933,14 @@ extract_coefs =
 
 # Extrair coeficientes dos melhores modelos
 
-coefs_CVc <- extract_coefs(mod_invCVc, "CVc")
-coefs_CVe <- extract_coefs(mod_invCVe, "CVe")
-coefs_Delta <- extract_coefs(mod_invDelta, "Delta")
-coefs_Psi <- extract_coefs(mod_invPsi, "Psi")
-coefs_omega <- extract_coefs(mod_invomega, "Omega")
+coefs_CVc <- extract_coefs(mod_invCVc, "Variabilidade da comunidade")
+coefs_CVe <- extract_coefs(mod_invCVe, "Variabilidade das populacões")
+coefs_Delta <- extract_coefs(mod_invDelta, "Efeito dominância")
+coefs_Psi <- extract_coefs(mod_invPsi, "Efeito assincronia")
+coefs_omega <- extract_coefs(mod_invomega, "Efeito diversidade")
 
 # Combinar todos os coeficientes
-all_coefs <- bind_rows(coefs_CVc, coefs_CVe, coefs_Delta, coefs_Psi, coefs_omega)
+all_coefs <- bind_rows(coefs_CVc, coefs_CVe, coefs_Delta, coefs_omega)
 
 # Padronizar nomes das variáveis para melhor visualização
 all_coefs = all_coefs %>%
@@ -953,7 +957,7 @@ all_coefs = all_coefs %>%
 all_coefs = all_coefs %>%
   mutate(
     # Ordenar variáveis resposta
-    model = factor(model, levels = c("CVc", "CVe", "Delta", "Psi", "Omega")),
+    model = factor(model, levels = c("log_CVc", "log_CVe", "log_Delta", "log_Omega")),
     
     # Ordenar variáveis preditoras
     term_clean = factor(term_clean, levels = c(
