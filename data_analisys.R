@@ -1149,8 +1149,4 @@ plot = p,
        width = 34, height = 32, units = "cm",
        dpi = 300, bg = "white")
 
-getwd()
 
-
-all_coefs |> count(model, useNA = "always")
-str(all_coefs)
