@@ -13,7 +13,7 @@ library(tidyverse)
 library(lmerTest)
 library(AICcmodavg)
 library(here)
-
+  
 
 dados = read_csv(here("data_for_collaborators.csv"))
 print(head(dados))
@@ -314,14 +314,14 @@ dados <- dados |>
   )
 
 mod2.1CVc <- lmer(
-  log_CVc ~ s_inv_rich_c + s_inv_rel_abund_c  + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich + s_inv_rel_abund  + (1 | HYBAS_ID),
   data = dados
 )
 
 summary(mod2.1CVc)
 
 mod2.1CVc_int = lmer(
-  log_CVc ~ s_inv_rich_c * s_inv_rel_abund_c + (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich * s_inv_rel_abund + (1 | HYBAS_ID),
   data = dados
 )
 summary(mod2.1CVc_int)
@@ -332,14 +332,14 @@ summary(mod2.1CVc_int)
 #Modelo 3.1 - Invasão total 
 
 mod3.1CVc <- lmer(
-  log_CVc ~ yrs_with_intro_c + s_inv_rich_c + s_inv_rel_abund_c + (1 | HYBAS_ID),
+  log_CVc ~ yrs_with_intro + s_inv_rich + s_inv_rel_abund + (1 | HYBAS_ID),
   data = dados
 )
 
 summary(mod3.1CVc)
 
 mod3.1CVc_int = lmer(
-  log_CVc ~ s_inv_rich_c * s_inv_rel_abund_c * yrs_with_intro_c+ (1 | HYBAS_ID),
+  log_CVc ~ s_inv_rich * s_inv_rel_abund * yrs_with_intro+ (1 | HYBAS_ID),
   data = dados
 )
 summary(mod3.1CVc_int)
@@ -417,7 +417,7 @@ summary(mod2.1CVe)
 
 mod3.1CVe <- lmer(
   log_CVe ~ yrs_with_intro_z + s_inv_rich_z + (1 | HYBAS_ID),
-  data = dados_CVe_comp,
+  data = dados,
   REML = FALSE
 ) # Acho que esse modelo é o mais interessante pra Cve até agora.
 
@@ -447,7 +447,7 @@ summary(mod4CVe)
 
 mod_globalCVe <- lmer(
   log_CVe ~ yrs_with_intro_z + s_inv_rich_z + s_spat_btw_z + (1 | HYBAS_ID),
-  data = dados_CVe_comp,
+  data = dados,
   REML = FALSE
 ) 
 
@@ -942,8 +942,7 @@ coefs_omega <- extract_coefs(mod_invomega, "Efeito diversidade")
 # Combinar todos os coeficientes
 all_coefs <- bind_rows(coefs_CVc, coefs_CVe, coefs_Delta, coefs_omega)
 
-# Padronizar nomes das variáveis para melhor visualização
-all_coefs = all_coefs %>%
+all_coefs <- all_coefs |>
   mutate(term_clean = case_when(
     term == "s_inv_rich_z" ~ "Riqueza de não-nativas",
     term == "s_inv_rel_abund_z" ~ "Abundância relativa de não-nativas",
@@ -954,32 +953,30 @@ all_coefs = all_coefs %>%
     TRUE ~ term
   ))
 
-all_coefs = all_coefs %>%
+all_coefs <- all_coefs |>
   mutate(
-    # Ordenar variáveis resposta
-    model = factor(model, levels = c("log_CVc", "log_CVe", "log_Delta", "log_Omega")),
-    
-    # Ordenar variáveis preditoras
+    model = factor(model, levels = c(
+      "Variabilidade da comunidade",
+      "Variabilidade das populacões",
+      "Efeito dominância",
+      "Efeito diversidade"
+    )),
     term_clean = factor(term_clean, levels = c(
-     "Riqueza de não-nativas",
-      "Abundância relativa de invasoras",
-      "Riqueza de nativas"
+      "Riqueza de não-nativas",
+      "Abundância relativa de não-nativas",
+      "Riqueza de nativas",
       "Anos desde introdução",
       "Conectividade dentro da bacia",
       "Conectividade entre bacias"
     )),
-    
-
-    # Adicionar coluna de significância (se ainda não tiver)
     significance = case_when(
       p.value < 0.001 ~ "***",
-      p.value < 0.01 ~ "**",
-      p.value < 0.05 ~ "*",
-      p.value < 0.1 ~ ".",
+      p.value < 0.01  ~ "**",
+      p.value < 0.05  ~ "*",
+      p.value < 0.1   ~ ".",
       TRUE ~ "ns"
     )
   )
-
 
 # Forest plot final refinado
 
@@ -1083,9 +1080,7 @@ all_coefs = all_coefs |>
     ordem[ordem %in% unique(term_clean)]
   )))
 
-
-
-p = all_coefs |>
+all_coefs |>
 ggplot(aes(x = estimate, y = term_clean,
 color = term_clean)) +
 
@@ -1098,10 +1093,10 @@ linewidth = 0.9) +
 
 geom_errorbar(aes(xmin = conf.low,
  xmax = conf.high), width = 0,
-linewidth = 1.8, show.legend = FALSE) +
+linewidth = 2.4, show.legend = FALSE) +
 
 
-geom_point(size = 5, show.legend = FALSE) +
+geom_point(size = 7) +
 
 
 facet_wrap(~model,
@@ -1119,17 +1114,35 @@ scale_color_npg() +
 labs(x = NULL,
 y = NULL) +
 
-theme_minimal(base_size = 20) +
+guides(color = 
+  guide_legend(nrow = 2, 
+  byrow = TRUE, 
+  override.aes = list(size = 7, linewidth = 1))) +
+
+theme_minimal(base_size = 24) +
   theme(
     strip.background = element_rect(fill = "black", color = NA),
     strip.text = element_text(face = "bold", size = 20, color = "white"),
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
     panel.spacing = unit(1.1, "lines"),
-    axis.text.y = element_text(size = 19),
-    axis.text.x = element_text(size = 17),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(size = 24, face = "bold"),
+    legend.position = "top",
+    legend.text = element_text(size = 16),
+    legend.title = element_blank(),
     plot.margin = margin(14, 20, 14, 14)
-  )
+  ) 
+
+
+ggplot(all_coefs, aes(x = estimate, y = term_clean, color = term_clean)) +
+  geom_point(size = 7) +
+  facet_wrap(~model, ncol = 1) +
+  theme(legend.position = "bottom")
+
+
+
 
 ggsave("teste.png",
 plot = p,
@@ -1137,3 +1150,7 @@ plot = p,
        dpi = 300, bg = "white")
 
 getwd()
+
+
+all_coefs |> count(model, useNA = "always")
+str(all_coefs)
