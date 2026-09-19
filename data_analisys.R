@@ -692,7 +692,7 @@ summary(mod_invCVe)
 #Gráfico preditora mais explicativa (Sem escala / yrs_with_intro)
 
 dados |>
-  ggplot(aes(x = yrs_with_intro, y = CVe)) +
+  ggplot(aes(x = yrs_with_intro, y = log_CVe)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", color = paletawes[2]) +
   labs(title = "Variabilidade populacional vs. tempo de introdução") +
@@ -758,7 +758,7 @@ mod_invDelta <- lmer(
 #Gráfico preditora mais explicativa (1) (Sem escala / yrs_with_intro)
 
 dados |>
-  ggplot(aes(x = yrs_with_intro, y = Delta)) +
+  ggplot(aes(x = yrs_with_intro, y = log_Delta)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", color = paletawes[2]) +
   labs(title = "Efeito dominância vs. tempo de introdução") +
@@ -767,7 +767,7 @@ dados |>
 #Gráfico preditora mais explicativa (2) (Sem escala / s_inv_rich)
 
 dados |>
-  ggplot(aes(x = s_inv_rich, y = Delta)) +
+  ggplot(aes(x = s_inv_rich, y = log_Delta)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", color = paletawes[2]) +
   labs(title = "Efeito dominância vs. riqueza de não-nativas") +
@@ -842,7 +842,7 @@ summary(mod_invPsi)
 #Gráfico preditora mais explicativa  (Sem escala / yrs_with_intro)
 
 dados |>
-  ggplot(aes(x = yrs_with_intro, y = Psi)) +
+  ggplot(aes(x = yrs_with_intro, y = log_Psi)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", color = paletawes[2]) +
   labs(title = "Efeito assincronia vs. tempo de introdução") +
@@ -905,7 +905,7 @@ mod_invomega <- lmer(
 #Gráfico preditora mais explicativa  (Sem escala / yrs_with_intro)
 
 dados |>
-  ggplot(aes(x = yrs_with_intro, y = omega)) +
+  ggplot(aes(x = yrs_with_intro, y = log_omega)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", color = paletawes[2]) +
   labs(title = "Efeito diversidade vs. tempo de introdução") +
@@ -916,7 +916,7 @@ summary(mod_invPsi)
 
 #Gráficos finais
 
-install.packages("broom.mixed")
+library(broom.mixed)
 # Função para extrair coeficientes com intervalos de confiança
 extract_coefs =
  function(model, model_name) {
@@ -1080,7 +1080,7 @@ all_coefs = all_coefs |>
     ordem[ordem %in% unique(term_clean)]
   )))
 
-all_coefs |>
+p =all_coefs |>
 ggplot(aes(x = estimate, y = term_clean,
 color = term_clean)) +
 
@@ -1100,7 +1100,7 @@ geom_point(size = 7) +
 
 
 facet_wrap(~model,
-ncol = 1, 
+ncol = 2, 
 scales = "fixed",
 strip.position = "top") +
 
@@ -1121,18 +1121,23 @@ guides(color =
 
 theme_minimal(base_size = 24) +
   theme(
-    strip.background = element_rect(fill = "black", color = NA),
-    strip.text = element_text(face = "bold", size = 20, color = "white"),
+    strip.background = element_rect(fill = "#fffefe", color = NA),
+    strip.text = element_text(face = "bold", size = 24, color = "#000000"),
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
     panel.spacing = unit(1.1, "lines"),
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank(),
     axis.text.x = element_text(size = 24, face = "bold"),
-    legend.position = "top",
-    legend.text = element_text(size = 16),
+    legend.position = "bottom",
+    legend.text = element_text(size = 20),
     legend.title = element_blank(),
-    plot.margin = margin(14, 20, 14, 14)
+    plot.margin = margin(14, 20, 14, 14),
+    panel.border = element_rect(
+      color = "black",   
+      fill = NA,            
+      linewidth = 1    
+    ),
   ) 
 
 
@@ -1144,7 +1149,7 @@ ggplot(all_coefs, aes(x = estimate, y = term_clean, color = term_clean)) +
 
 
 
-ggsave("teste.png",
+ggsave("plot1.png",
 plot = p,
        width = 34, height = 32, units = "cm",
        dpi = 300, bg = "white")
