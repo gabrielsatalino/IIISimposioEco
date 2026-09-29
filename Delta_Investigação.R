@@ -45,6 +45,8 @@ print(raras)
 #Teste de especulação: 
 #Alteração no rank abundância (Dominância) com a invasão
 
+#Rank da abundancia de cada espécie em cada sítio
+
 rank_abund <- raw_data %>%
   group_by(SiteID, Species,Status) %>%
   summarise(abund_total = sum(Abundance, na.rm = TRUE), .groups = "drop") %>%
@@ -56,5 +58,27 @@ rank_abund <- raw_data %>%
   arrange(SiteID, rank) %>%
   ungroup()
 
+#Rank da abundancia de cada espécie em cada sítio em cada ano
 
+
+rank_ano <- raw_data %>%
+  group_by(SiteID, Year, Species, Status) %>%
+  summarise(abund = sum(Abundance, na.rm = TRUE), .groups = "drop") %>%
+  group_by(SiteID, Year) %>%
+  mutate(rank = min_rank(desc(abund))) %>%   # 1 = mais abundante
+  ungroup() %>%
+  arrange(SiteID, Species, Year)
+
+#Quanto o rank da espécie mudou em cada sítio
+
+mudanca_rank <- rank_ano %>%
+  group_by(SiteID, Species, Status) %>%
+  arrange(Year, .by_group = TRUE) %>%
+  summarise(
+    n_anos       = n(),
+    rank_inicial = first(rank),
+    rank_final   = last(rank),
+    delta_rank   = rank_inicial - rank_final,  # > 0 = subiu no ranking (ficou mais dominante)
+    .groups = "drop"
+  )
 
