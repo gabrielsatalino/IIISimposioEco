@@ -1140,6 +1140,7 @@ theme_minimal(base_size = 24) +
     ),
   ) 
 
+p
 
 ggplot(all_coefs, aes(x = estimate, y = term_clean, color = term_clean)) +
   geom_point(size = 7) +
